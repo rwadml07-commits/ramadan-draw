@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANIS Ramadan Live Draw</title>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body{
+margin:0;
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+font-family:Arial;
+overflow:hidden;
+color:white;
+background:linear-gradient(135deg,#ff5e00,#ff9a2f);
+}
+
+/* النجوم */
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.star{
+position:absolute;width:3px;height:3px;background:gold;
+border-radius:50%;box-shadow:0 0 10px gold;
+animation:twinkle 2s infinite alternate;
+}
+@keyframes twinkle{
+from{opacity:0.3;transform:scale(0.8);}
+to{opacity:1;transform:scale(1.4);}
+}
+
+/* القبة */
+.machine{
+position:relative;width:380px;height:380px;border-radius:50%;
+background:radial-gradient(circle at 30% 30%, #ffffff, #eaeaea);
+box-shadow:0 30px 60px rgba(0,0,0,0.4),inset 0 0 30px rgba(0,0,0,0.15);
+overflow:hidden;border:10px solid rgba(255,255,255,0.4);
+}
+
+/* الكرات */
+.ball{
+position:absolute;width:65px;height:65px;border-radius:50%;
+background:radial-gradient(circle at 30% 30%, #fff, #ddd);
+display:flex;justify-content:center;align-items:center;
+font-size:12px;font-weight:bold;color:#000;text-align:center;
+padding:5px;box-shadow:0 10px 20px rgba(0,0,0,0.3);
+animation:move linear infinite;transition:0.5s;
+}
+@keyframes move{
+0%{transform:translate(0,0);}
+25%{transform:translate(90px,-90px);}
+50%{transform:translate(-110px,80px);}
+75%{transform:translate(100px,100px);}
+100%{transform:translate(-90px,-90px);}
+}
+
+.stop .ball{animation:none !important;}
+
+.winner{
+background:linear-gradient(135deg,#ff8c00,#ff4e00);
+color:white;transform:scale(1.8);
+box-shadow:0 0 60px rgba(255,255,255,0.8);
+z-index:20;
+}
+
+.result{
+position:absolute;top:50%;left:50%;
+transform:translate(-50%,-50%);
+font-size:38px;font-weight:bold;
+background:rgba(0,0,0,0.75);
+padding:25px 50px;border-radius:20px;
+display:none;z-index:25;
+}
+
+.base{margin-top:25px;display:flex;gap:10px;}
+button{
+padding:14px 20px;border:none;border-radius:30px;
+font-size:16px;cursor:pointer;font-weight:bold;
+}
+.draw-btn{background:white;color:#ff5e00;}
+.reset-btn{background:#222;color:white;}
+
+/* الثلاث نقاط */
+.menu-wrap{position:fixed;top:15px;right:15px;z-index:100;}
+.menu-btn{
+width:45px;height:45px;border:none;border-radius:12px;
+background:rgba(0,0,0,0.3);color:white;
+font-size:24px;cursor:pointer;
+}
+.menu{
+position:absolute;top:55px;right:0;
+background:rgba(0,0,0,0.9);
+border-radius:12px;padding:10px;
+display:none;min-width:200px;
+}
+.menu.show{display:block;}
+.menu-item{
+width:100%;background:none;border:none;
+color:white;padding:10px;text-align:right;
+cursor:pointer;border-radius:8px;
+}
+.menu-item:hover{background:rgba(255,255,255,0.1);}
+
+/* الشعار */
+.corner-logo{
+position:fixed;
+bottom:20px;
+right:20px;
+width:100px;
+opacity:0.95;
+z-index:200;
+}
+</style>
+</head>
+
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="machine" id="machine">
+<div class="result" id="result"></div>
+</div>
+
+<div class="base">
+<button class="draw-btn" onclick="draw()">اسحب</button>
+<button class="reset-btn" onclick="resetDraw()">إعادة</button>
+</div>
+
+<input type="file" id="fileInput" accept=".xlsx,.xls" hidden>
+
+<div class="menu-wrap">
+<button class="menu-btn" id="menuBtn">⋮</button>
+<div class="menu" id="menu">
+<button class="menu-item" onclick="fileInput.click()">📄 رفع ملف Excel</button>
+<button class="menu-item" onclick="endDraw()">⛔ إنهاء السحب</button>
+</div>
+</div>
+
+<!-- الشعار -->
+<img src="logo.png" class="corner-logo">
+
+<script>
+
+(function(){
+const stars=document.getElementById("stars");
+for(let i=0;i<70;i++){
+let s=document.createElement("div");
+s.className="star";
+s.style.top=Math.random()*100+"vh";
+s.style.left=Math.random()*100+"vw";
+stars.appendChild(s);
+}
+})();
+
+let names=[];
+let originalNames=[];
+let machine=document.getElementById("machine");
+
+function createBalls(){
+machine.classList.remove("stop");
+machine.innerHTML='<div class="result" id="result"></div>';
+names.forEach(name=>{
+let ball=document.createElement("div");
+ball.className="ball";
+ball.innerText=name;
+ball.style.top=Math.random()*280+"px";
+ball.style.left=Math.random()*280+"px";
+machine.appendChild(ball);
+});
+}
+
+function draw(){
+if(names.length===0){
+alert("انتهت جميع الأسماء 🎉");
+return;
+}
+let balls=document.querySelectorAll(".ball");
+let random=Math.floor(Math.random()*balls.length);
+let winnerBall=balls[random];
+let winnerName=winnerBall.innerText;
+
+machine.classList.add("stop");
+winnerBall.classList.add("winner");
+
+let result=document.getElementById("result");
+result.innerText="🎉 الفائز: "+winnerName;
+result.style.display="block";
+
+confetti({particleCount:300,spread:150,origin:{y:0.6}});
+names = names.filter(name => name !== winnerName);
+}
+
+function resetDraw(){
+createBalls();
+}
+
+function endDraw(){
+names=[...originalNames];
+createBalls();
+alert("تم إعادة جميع الأسماء للسحب من جديد ✅");
+}
+
+const menuBtn=document.getElementById("menuBtn");
+const menu=document.getElementById("menu");
+
+menuBtn.addEventListener("click",(e)=>{
+e.stopPropagation();
+menu.classList.toggle("show");
+});
+document.addEventListener("click",()=>menu.classList.remove("show"));
+
+fileInput.addEventListener("change",function(e){
+const file=e.target.files[0];
+if(!file) return;
+const reader=new FileReader();
+reader.onload=function(event){
+const data=new Uint8Array(event.target.result);
+const workbook=XLSX.read(data,{type:"array"});
+const sheet=workbook.Sheets[workbook.SheetNames[0]];
+const rows=XLSX.utils.sheet_to_json(sheet,{header:1});
+originalNames=rows.map(r=>r[0]).filter(v=>v).map(v=>v.toString().trim());
+names=[...originalNames];
+createBalls();
+};
+reader.readAsArrayBuffer(file);
+});
+
+</script>
+</body>
+</html>
