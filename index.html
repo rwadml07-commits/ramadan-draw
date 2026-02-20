@@ -34,31 +34,26 @@ from{opacity:0.3;transform:scale(0.8);}
 to{opacity:1;transform:scale(1.4);}
 }
 
-/* هيدر رمضان */
+/* هيدر */
 .ramadan-header{
 display:flex;
 align-items:center;
 gap:20px;
 margin-bottom:20px;
-z-index:2;
 }
 
 .crescent{
-width:70px;
-height:70px;
+width:70px;height:70px;
 border-radius:50%;
 background:gold;
 position:relative;
 box-shadow:0 0 25px gold;
 }
-
 .crescent::after{
 content:"";
 position:absolute;
-top:10px;
-left:18px;
-width:70px;
-height:70px;
+top:10px;left:18px;
+width:70px;height:70px;
 border-radius:50%;
 background:linear-gradient(135deg,#ff5e00,#ff9a2f);
 }
@@ -82,7 +77,8 @@ width:380px;
 height:380px;
 border-radius:50%;
 background:radial-gradient(circle at 30% 30%, #ffffff, #eaeaea);
-box-shadow:0 30px 60px rgba(0,0,0,0.4),inset 0 0 30px rgba(0,0,0,0.15);
+box-shadow:0 30px 60px rgba(0,0,0,0.4),
+inset 0 0 30px rgba(0,0,0,0.15);
 overflow:hidden;
 border:10px solid rgba(255,255,255,0.4);
 }
@@ -90,8 +86,7 @@ border:10px solid rgba(255,255,255,0.4);
 /* الكرات */
 .ball{
 position:absolute;
-width:65px;
-height:65px;
+width:65px;height:65px;
 border-radius:50%;
 background:radial-gradient(circle at 30% 30%, #fff, #ddd);
 display:flex;
@@ -103,7 +98,7 @@ color:#000;
 text-align:center;
 padding:5px;
 box-shadow:0 10px 20px rgba(0,0,0,0.3);
-animation:move linear infinite;
+animation:move 3s linear infinite;
 }
 
 @keyframes move{
@@ -126,8 +121,7 @@ z-index:20;
 
 .result{
 position:absolute;
-top:50%;
-left:50%;
+top:50%;left:50%;
 transform:translate(-50%,-50%);
 font-size:34px;
 font-weight:bold;
@@ -141,11 +135,9 @@ z-index:25;
 .base{margin-top:25px;display:flex;gap:10px;}
 button{
 padding:12px 20px;
-border:none;
-border-radius:30px;
+border:none;border-radius:30px;
 font-size:16px;
-cursor:pointer;
-font-weight:bold;
+cursor:pointer;font-weight:bold;
 }
 .draw-btn{background:white;color:#ff5e00;}
 .reset-btn{background:#222;color:white;}
@@ -173,12 +165,13 @@ cursor:pointer;border-radius:8px;
 }
 .menu-item:hover{background:rgba(255,255,255,0.1);}
 
-/* الشعار */
+/* الشعار SVG مدمج */
 .corner-logo{
 position:fixed;
 bottom:20px;
 right:20px;
-width:100px;
+width:90px;
+opacity:0.95;
 z-index:200;
 }
 </style>
@@ -215,7 +208,10 @@ z-index:200;
 </div>
 </div>
 
-<img src="logo.png" class="corner-logo">
+<!-- شعار مدمج SVG -->
+<svg class="corner-logo" viewBox="0 0 512 512">
+<path fill="#ffffff" d="M256 32C132 32 32 132 32 256s100 224 224 224c56 0 108-20 148-54-26 10-54 16-84 16-124 0-224-100-224-224 0-68 30-130 78-172C166 38 212 32 256 32z"/>
+</svg>
 
 <script>
 (function(){
@@ -247,18 +243,29 @@ machine.appendChild(ball);
 }
 
 function draw(){
-if(names.length===0){alert("انتهت جميع الأسماء");return;}
+if(names.length===0){
+alert("انتهت جميع الأسماء");
+return;
+}
+
+machine.classList.remove("stop");
+
+setTimeout(()=>{
 let balls=document.querySelectorAll(".ball");
 let random=Math.floor(Math.random()*balls.length);
 let winnerBall=balls[random];
 let winnerName=winnerBall.innerText;
+
 machine.classList.add("stop");
 winnerBall.classList.add("winner");
+
 let result=document.getElementById("result");
 result.innerText="🎉 الفائز: "+winnerName;
 result.style.display="block";
+
 confetti({particleCount:250,spread:120,origin:{y:0.6}});
 names=names.filter(name=>name!==winnerName);
+},1500);
 }
 
 function resetDraw(){createBalls();}
